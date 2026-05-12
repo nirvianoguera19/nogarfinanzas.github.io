@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nogar Consultores — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:      #f5f6f8;
+  --surface: #ffffff;
+  --border:  #e8eaed;
+  --border2: #d1d5db;
+  --text:    #111827;
+  --text2:   #6b7280;
+  --text3:   #9ca3af;
+  --green:   #059669;
+  --green-bg:#f0fdf4;
+  --green-bd:#a7f3d0;
+  --red:     #dc2626;
+  --red-bg:  #fef2f2;
+  --amber:   #d97706;
+  --amber-bg:#fffbeb;
+  --blue:    #2563eb;
+  --blue-bg: #eff6ff;
+  --radius:  12px;
+  --radius-sm: 8px;
+  --shadow:  0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: #059669;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -.5px;
+}
+.logo-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -.2px; }
+.logo-sub  { font-size: 11px; color: var(--text3); }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+.datetime-pill {
+  font-size: 12px; color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 13px;
+  display: flex; align-items: center; gap: 7px;
+  min-width: 170px;
+}
+.datetime-pill span { color: var(--text); font-weight: 500; }
+
+.status-pill {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text2);
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 13px;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background .3s; }
+.dot.ok      { background: var(--green); }
+.dot.err     { background: var(--red); }
+.dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.btn-refresh {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-family: inherit;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 6px 13px;
+  color: var(--text); cursor: pointer; transition: all .15s;
+  box-shadow: var(--shadow);
+}
+.btn-refresh:hover { background: var(--bg); border-color: var(--green); color: var(--green); }
+.btn-refresh svg { width: 13px; height: 13px; }
+
+/* ── MAIN ── */
+main { max-width: 1240px; margin: 0 auto; padding: 24px 32px 48px; }
+
+/* ── TOOLBAR: selector de mes ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.toolbar-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+.mes-btn {
+  font-size: 12px; font-family: inherit;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 14px; cursor: pointer;
+  color: var(--text2); transition: all .15s;
+}
+.mes-btn:hover { border-color: var(--green); color: var(--green); }
+.mes-btn.active {
+  background: var(--green-bg); border-color: var(--green);
+  color: var(--green); font-weight: 600;
+}
+
+/* ── ERROR / LOADING ── */
+.center-msg {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 60vh; gap: 16px; text-align: center;
+}
+.spinner {
+  width: 30px; height: 30px;
+  border: 2px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.err-card {
+  background: var(--surface); border: 1px solid #fca5a5;
+  border-radius: var(--radius); padding: 28px 32px; max-width: 500px;
+  box-shadow: var(--shadow);
+}
+.err-card h2 { color: var(--red); font-size: 15px; margin-bottom: 10px; }
+.err-card p  { color: var(--text2); font-size: 13px; line-height: 1.7; }
+.err-card code { background: #f3f4f6; border-radius: 4px; padding: 1px 6px; font-size: 11px; color: var(--amber); }
+
+/* ── SECTION TITLE ── */
+.section-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text3);
+  margin: 24px 0 12px;
+}
+
+/* ── METRICS GRID ── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
+}
+.metric {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 18px 14px;
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s;
+}
+.metric:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+.metric.green-card { background: var(--green-bg); border-color: var(--green-bd); }
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+.metric-icon  { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; background: var(--bg); }
+.metric-val   { font-size: 24px; font-weight: 600; letter-spacing: -.8px; line-height: 1.1; }
+.metric-val.green { color: var(--green); }
+.metric-sub   { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.badge        { display: inline-block; font-size: 9px; font-weight: 600; border-radius: 4px; padding: 2px 6px; margin-left: 5px; vertical-align: middle; }
+.badge-g      { background: var(--green-bg); color: var(--green); }
+.badge-r      { background: var(--red-bg); color: var(--red); }
+.badge-a      { background: var(--amber-bg); color: var(--amber); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 11px; font-weight: 600; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--text2); margin-bottom: 16px;
+}
+.two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* ── KPI ITEMS ── */
+.kpi-item {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.kpi-lbl { font-size: 11px; color: var(--text2); }
+.kpi-val { font-size: 16px; font-weight: 600; margin-top: 3px; }
+.sem-icon { font-size: 18px; }
+
+/* ── VENTAS POR PRODUCTO (barras horizontales) ── */
+.prod-list { display: flex; flex-direction: column; gap: 12px; }
+.prod-item { }
+.prod-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.prod-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.prod-vals { font-size: 12px; color: var(--text2); }
+.prod-vals strong { color: var(--text); font-weight: 600; }
+.bar-track { height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+.bar-fill  { height: 100%; background: var(--green); border-radius: 4px; transition: width .6s ease; }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  text-align: left; padding: 8px 12px;
+  color: var(--text3); font-weight: 600; font-size: 10px; letter-spacing: .5px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+td { padding: 11px 12px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+.pill { border-radius: 20px; padding: 2px 9px; font-size: 10px; font-weight: 600; display: inline-block; }
+.pg { background: var(--green-bg); color: var(--green); }
+.pa { background: var(--amber-bg); color: var(--amber); }
+.pr { background: var(--red-bg);   color: var(--red);   }
+.pb { background: var(--blue-bg);  color: var(--blue);  }
+
+/* ── REC BOX ── */
+.rec-box {
+  background: var(--green-bg); border: 1px solid var(--green-bd);
+  border-radius: var(--radius); padding: 16px 20px;
+  font-size: 13px; color: #065f46; line-height: 1.7;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+
+/* ── FOOTER ── */
+footer {
+  text-align: center; padding: 20px;
+  font-size: 11px; color: var(--text3);
+  border-top: 1px solid var(--border); margin-top: 32px;
+}
+
+@media (max-width: 768px) {
+  header { padding: 0 16px; }
+  main { padding: 16px; }
+  .two-col, .three-col { grid-template-columns: 1fr; }
+  .datetime-pill { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <div class="logo-mark">N</div>
+      <div>
+        <div class="logo-name">Nogar Consultores</div>
+        <div class="logo-sub">Dashboard financiero interno</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="datetime-pill">
+        📅 <span id="live-datetime">—</span>
+      </div>
+      <div class="status-pill">
+        <div class="dot loading" id="dot"></div>
+        <span id="status-txt">Cargando...</span>
+      </div>
+      <button class="btn-refresh" onclick="init()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loader" class="center-msg">
+    <div class="spinner"></div>
+    <div style="color:var(--text2);font-size:13px">Conectando con Google Sheets...</div>
+  </div>
+
+  <div id="err-wrap" style="display:none" class="center-msg">
+    <div class="err-card">
+      <h2>No se pudo conectar</h2>
+      <p id="err-msg">Verifica la URL del Apps Script y que el deployment esté activo.</p>
+    </div>
+  </div>
+
+  <div id="dash" style="display:none">
+
+    <!-- SELECTOR DE MES -->
+    <div class="toolbar" id="mes-toolbar">
+      <span class="toolbar-label">Ver mes:</span>
+    </div>
+
+    <!-- MÉTRICAS -->
+    <div class="section-label">Resumen financiero</div>
+    <div class="metrics" id="metrics-grid"></div>
+
+    <!-- GRÁFICAS -->
+    <div class="section-label">Análisis</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Ingresos vs gastos por mes</div>
+        <div style="position:relative;height:220px">
+          <canvas id="c-meses"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Ventas por producto — cantidad y monto</div>
+        <div id="prod-list" class="prod-list" style="margin-top:4px"></div>
+      </div>
+    </div>
+
+    <!-- GASTOS POR CATEGORÍA -->
+    <div class="section-label">Gastos por categoría</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Distribución de egresos</div>
+        <div style="position:relative;height:220px">
+          <canvas id="c-gastos"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Detalle por categoría</div>
+        <div id="gastos-list" class="prod-list" style="margin-top:4px"></div>
+      </div>
+    </div>
+
+    <!-- KPI PUBLICIDAD -->
+    <div class="section-label">KPI publicidad · Instagram Ads</div>
+    <div class="three-col" id="kpi-grid" style="margin-bottom:12px"></div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Campañas registradas</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Período</th><th>Producto</th><th>Conversaciones</th>
+              <th>Inversión</th><th>Vendidos</th><th>Tasa conv.</th>
+              <th>CPV</th><th>ROI</th>
+            </tr>
+          </thead>
+          <tbody id="camps-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rec-box" id="rec-box"></div>
+
+  </div>
+</main>
+
+<footer>Nogar Consultores — Dashboard financiero interno · Datos en tiempo real vía Google Sheets</footer>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyNgtA9cqDD4vi361uWhxdguRoTAW9B89wrulFoUGFjwINKIeBp4DqN6hIBW5wlLPA/exec';
+const AUTH_TOKEN = '';
+
+// ── Reloj en vivo ──
+function tickClock() {
+  const now = new Date();
+  const opts = { weekday:'short', day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false };
+  document.getElementById('live-datetime').textContent =
+    now.toLocaleDateString('es-VE', { day:'2-digit', month:'short', year:'numeric' }) +
+    ' · ' +
+    now.toLocaleTimeString('es-VE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+tickClock();
+setInterval(tickClock, 1000);
+
+// ── Estado global ──
+let ALL_VENTAS = [], ALL_GASTOS = [], ALL_KPI = [];
+let MES_ACTIVO = 'todos';
+
+// ── Fetch ──
+async function fetchAllSheets() {
+  let url = APPS_SCRIPT_URL + '?sheet=all';
+  if (AUTH_TOKEN) url += '&token=' + encodeURIComponent(AUTH_TOKEN);
+  const r = await fetch(url, { signal: AbortSignal.timeout(15000) });
+  if (!r.ok) throw new Error('Error HTTP ' + r.status);
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error || 'Error en el servidor');
+  return data;
+}
+
+function setStatus(state, txt) {
+  document.getElementById('dot').className = 'dot ' + state;
+  document.getElementById('status-txt').textContent = txt;
+}
+
+let chartInstances = {};
+function mkChart(id, cfg) {
+  if (chartInstances[id]) chartInstances[id].destroy();
+  chartInstances[id] = new Chart(document.getElementById(id), cfg);
+}
+
+// ── INIT ──
+async function init() {
+  document.getElementById('loader').style.display = 'flex';
+  document.getElementById('dash').style.display = 'none';
+  document.getElementById('err-wrap').style.display = 'none';
+  setStatus('loading', 'Conectando...');
+
+  try {
+    const data = await fetchAllSheets();
+    ALL_VENTAS = data.ventas || [];
+    ALL_GASTOS = data.gastos || [];
+    ALL_KPI    = data.kpi    || [];
+
+    buildMesToolbar();
+    render();
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+    setStatus('ok', 'Actualizado ' + new Date().toLocaleTimeString('es-VE', {hour:'2-digit', minute:'2-digit'}));
+  } catch(e) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('err-wrap').style.display = 'flex';
+    document.getElementById('err-msg').textContent = e.message;
+    setStatus('err', 'Sin conexión');
+    console.error(e);
+  }
+}
+
+// ── Construir botones de mes ──
+function buildMesToolbar() {
+  const meses = new Set();
+  [...ALL_VENTAS, ...ALL_GASTOS].forEach(r => {
+    const m = parseMes(r.Fecha || r.fecha || '');
+    if (m) meses.add(m);
+  });
+
+  const sorted = [...meses].sort();
+  const tb = document.getElementById('mes-toolbar');
+  tb.innerHTML = '<span class="toolbar-label">Ver mes:</span>';
+
+  const btnTodos = document.createElement('button');
+  btnTodos.className = 'mes-btn active';
+  btnTodos.textContent = 'Todos';
+  btnTodos.onclick = () => setMes('todos');
+  tb.appendChild(btnTodos);
+
+  sorted.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'mes-btn';
+    btn.textContent = fmtMes(m);
+    btn.dataset.mes = m;
+    btn.onclick = () => setMes(m);
+    tb.appendChild(btn);
+  });
+}
+
+function setMes(mes) {
+  MES_ACTIVO = mes;
+  document.querySelectorAll('.mes-btn').forEach(b => {
+    b.classList.toggle('active',
+      mes === 'todos' ? b.textContent === 'Todos' : b.dataset.mes === mes
+    );
+  });
+  render();
+}
+
+// ── Filtrar por mes ──
+function filtrar(arr) {
+  if (MES_ACTIVO === 'todos') return arr;
+  return arr.filter(r => {
+    const m = parseMes(r.Fecha || r.fecha || '');
+    return m === MES_ACTIVO;
+  });
+}
+
+// ── RENDER ──
+function render() {
+  const ventas = filtrar(ALL_VENTAS);
+  const gastos = filtrar(ALL_GASTOS);
+  const kpiRows = ALL_KPI; // KPI no tiene fecha de mes, siempre muestra todo
+
+  // Totales
+  let ingTotal = 0, gasTotal = 0;
+  const prodMap   = {}; // { nombre: { monto, cant } }
+  const catMap    = {}; // gastos por categoría
+  const mesesMap  = {};
+
+  ventas.forEach(r => {
+    const monto = cleanNum(r.Monto || r['Monto($)'] || r['Total Venta ($)'] || 0);
+    const prod  = (r.Producto || r.Categoría || r['Producto/Servicio Específico'] || 'Otro').trim();
+    const fecha = r.Fecha || r.fecha || '';
+    if (monto > 0) {
+      ingTotal += monto;
+      const k = prod.length > 22 ? prod.slice(0,22)+'…' : prod;
+      if (!prodMap[k]) prodMap[k] = { monto:0, cant:0 };
+      prodMap[k].monto += monto;
+      prodMap[k].cant  += cleanNum(r.Cantidad || 1);
+      const mes = parseMes(fecha);
+      if (mes) {
+        if (!mesesMap[mes]) mesesMap[mes] = { ing:0, gas:0 };
+        mesesMap[mes].ing += monto;
+      }
+    }
+  });
+
+  gastos.forEach(r => {
+    const monto = cleanNum(r.Monto || r['Monto($)'] || 0);
+    const cat   = (r.Categoría || r.Categoria || r.categoria || 'Otros').trim();
+    const fecha = r.Fecha || r.fecha || '';
+    if (monto > 0) {
+      gasTotal += monto;
+      catMap[cat] = (catMap[cat] || 0) + monto;
+      const mes = parseMes(fecha);
+      if (mes) {
+        if (!mesesMap[mes]) mesesMap[mes] = { ing:0, gas:0 };
+        mesesMap[mes].gas += monto;
+      }
+    }
+  });
+
+  const saldo  = ingTotal - gasTotal;
+  const margen = ingTotal > 0 ? saldo / ingTotal : 0;
+
+  // ── MÉTRICAS ──
+  document.getElementById('metrics-grid').innerHTML = [
+    { icon:'💵', label:'Ingresos totales',  val:'$'+fmt(ingTotal), sub: ventas.length + ' registros', cls:'', valcls:'' },
+    { icon:'📤', label:'Gastos totales',    val:'$'+fmt(gasTotal), sub: gastos.length + ' egresos',   cls:'', valcls:'' },
+    { icon:'🏦', label:'Saldo neto',        val:'$'+fmt(Math.abs(saldo)),
+      sub: saldo >= 0 ? 'Resultado positivo' : 'Resultado negativo',
+      cls: saldo >= 0 ? 'green-card' : '',
+      valcls: saldo >= 0 ? 'green' : '',
+      badge: saldo >= 0 ? {cls:'badge-g',txt:'▲ Positivo'} : {cls:'badge-r',txt:'▼ Negativo'} },
+    { icon:'📊', label:'Margen neto',       val:(margen*100).toFixed(1)+'%',
+      sub:'Sobre ingresos',
+      cls:'', valcls: margen >= .2 ? 'green' : '',
+      badge: margen>=.2?{cls:'badge-g',txt:'Bueno'}:margen>=.05?{cls:'badge-a',txt:'Regular'}:{cls:'badge-r',txt:'Ajustado'} },
+    { icon:'🛒', label:'Transacciones',     val: ventas.length.toString(), sub:'Ventas del período', cls:'', valcls:'' },
+  ].map(m => `
+    <div class="metric ${m.cls}">
+      <div class="metric-label"><span class="metric-icon">${m.icon}</span>${m.label}</div>
+      <div class="metric-val ${m.valcls}">${m.val}${m.badge?`<span class="badge ${m.badge.cls}">${m.badge.txt}</span>`:''}</div>
+      <div class="metric-sub">${m.sub}</div>
+    </div>`).join('');
+
+  // ── CHART MESES ──
+  const mesesKeys = Object.keys(mesesMap).sort().slice(-6);
+  const chartColors = { green:'#059669', red:'#dc2626' };
+  mkChart('c-meses', {
+    type: 'bar',
+    data: {
+      labels: mesesKeys.length ? mesesKeys.map(fmtMes) : ['Sin datos'],
+      datasets: mesesKeys.length ? [
+        { label:'Ingresos', data: mesesKeys.map(m => +mesesMap[m].ing.toFixed(2)), backgroundColor:'rgba(5,150,105,.75)', borderRadius:5, borderSkipped:false },
+        { label:'Gastos',   data: mesesKeys.map(m => +mesesMap[m].gas.toFixed(2)), backgroundColor:'rgba(220,38,38,.65)',  borderRadius:5, borderSkipped:false }
+      ] : [{ data:[1], backgroundColor:'#e5e7eb' }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#6b7280', font:{size:11,family:'Plus Jakarta Sans'}, boxWidth:10, padding:12 } } },
+      scales:{
+        y:{ ticks:{ callback:v=>'$'+v, color:'#9ca3af', font:{size:10} }, grid:{ color:'rgba(0,0,0,.04)' }, border:{display:false} },
+        x:{ ticks:{ color:'#9ca3af', font:{size:10} }, grid:{display:false}, border:{display:false} }
+      }
+    }
+  });
+
+  // ── BARRAS PRODUCTOS (con cantidad) ──
+  const prodKeys = Object.keys(prodMap).sort((a,b) => prodMap[b].monto - prodMap[a].monto).slice(0,8);
+  const maxProd  = prodKeys.length ? Math.max(...prodKeys.map(k => prodMap[k].monto)) : 1;
+  document.getElementById('prod-list').innerHTML = prodKeys.length
+    ? prodKeys.map(k => {
+        const pct = Math.round(prodMap[k].monto / maxProd * 100);
+        const cant = Math.round(prodMap[k].cant);
+        return `
+        <div class="prod-item">
+          <div class="prod-header">
+            <span class="prod-name">${k}</span>
+            <span class="prod-vals"><strong>${cant}</strong> uds · <strong>$${prodMap[k].monto.toFixed(2)}</strong></span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('')
+    : '<div class="empty-state">Sin ventas en este período</div>';
+
+  // ── CHART GASTOS ──
+  const catKeys = Object.keys(catMap).sort((a,b) => catMap[b] - catMap[a]);
+  const PAL = ['#059669','#2563eb','#d97706','#dc2626','#7c3aed','#db2777','#0891b2','#65a30d'];
+  mkChart('c-gastos', {
+    type:'doughnut',
+    data:{
+      labels: catKeys.length ? catKeys : ['Sin datos'],
+      datasets:[{ data: catKeys.length ? catKeys.map(k=>+catMap[k].toFixed(2)) : [1], backgroundColor: catKeys.length ? PAL : ['#e5e7eb'], borderWidth:2, borderColor:'#fff', hoverOffset:6 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{ position:'right', labels:{ color:'#6b7280', font:{size:10,family:'Plus Jakarta Sans'}, boxWidth:10, padding:8 } } }
+    }
+  });
+
+  // ── BARRAS GASTOS POR CATEGORÍA ──
+  const maxCat = catKeys.length ? Math.max(...catKeys.map(k => catMap[k])) : 1;
+  document.getElementById('gastos-list').innerHTML = catKeys.length
+    ? catKeys.map((k,i) => {
+        const pct = Math.round(catMap[k] / maxCat * 100);
+        return `
+        <div class="prod-item">
+          <div class="prod-header">
+            <span class="prod-name">${k}</span>
+            <span class="prod-vals"><strong>$${catMap[k].toFixed(2)}</strong></span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%; background:${PAL[i%PAL.length]}"></div></div>
+        </div>`;
+      }).join('')
+    : '<div class="empty-state">Sin gastos en este período</div>';
+
+  // ── KPI PUBLICIDAD ──
+  let totConv=0, totInv=0, totVend=0, camps=0;
+  const campRows=[];
+  kpiRows.forEach(r => {
+    const conv = cleanNum(r.Conversaciones || 0);
+    const inv  = cleanNum(r.Invertidos || 0);
+    const vend = cleanNum(r.Vendidas || 0);
+    const pu   = cleanNum(r.IngresoEst || 0);
+    const prod = (r.Producto || '').trim();
+    const fi   = r.Inicio || '';
+    const ff   = r.Final  || '';
+    if (conv > 0 || vend > 0) {
+      totConv += conv; totInv += inv; totVend += vend; camps++;
+      const tasa = conv > 0 ? vend/conv : 0;
+      const cpv  = vend > 0 ? inv/vend  : 0;
+      const roi  = inv > 0 && pu > 0 ? (pu*vend - inv)/inv : null;
+      campRows.push({fi,ff,prod,conv,inv,vend,tasa,cpv,roi});
+    }
+  });
+
+  const tasaG = totConv > 0 ? totVend/totConv : 0;
+  const cpvG  = totVend > 0 ? totInv/totVend  : 0;
+  const sem   = (v,lo,hi) => v>=hi?'🟢':v>=lo?'🟡':'🔴';
+
+  document.getElementById('kpi-grid').innerHTML = [
+    { icon:'💬', lbl:'Conversaciones iniciadas', val: totConv.toLocaleString() },
+    { icon:'💵', lbl:'Inversión en publicidad',  val: '$'+totInv.toFixed(2)+' USD' },
+    { icon:'🛒', lbl:'Unidades vendidas (ads)',  val: totVend.toString() },
+    { icon:'📈', lbl:'Tasa de conversión',       val: (tasaG*100).toFixed(1)+'%',  extra: sem(tasaG,.08,.15) },
+    { icon:'🏷️', lbl:'Costo por venta (CPV)',    val: '$'+cpvG.toFixed(2)+' USD',   extra: cpvG===0?'':sem(1/(cpvG+.001),.1,.2) },
+    { icon:'📣', lbl:'Campañas registradas',     val: camps+' campaña'+(camps!==1?'s':'') },
+  ].map(k=>`
+    <div class="kpi-item">
+      <div><div class="kpi-lbl">${k.icon} ${k.lbl}</div><div class="kpi-val" style="margin-top:3px">${k.val}</div></div>
+      ${k.extra?`<span class="sem-icon">${k.extra}</span>`:''}
+    </div>`).join('');
+
+  document.getElementById('camps-body').innerHTML = campRows.length
+    ? campRows.map(r => {
+        const tc = r.tasa>=.15?'pg':r.tasa>=.08?'pa':'pr';
+        const rc = r.roi===null?'':r.roi>=1?'pg':r.roi>=0?'pa':'pr';
+        return `<tr>
+          <td style="color:var(--text2);font-size:11px">${r.fi}${r.ff?' – '+r.ff:''}</td>
+          <td><span class="pill pb">${r.prod||'—'}</span></td>
+          <td>${r.conv.toLocaleString()}</td>
+          <td>$${r.inv.toFixed(2)}</td>
+          <td>${r.vend}</td>
+          <td><span class="pill ${tc}">${(r.tasa*100).toFixed(1)}%</span></td>
+          <td>$${r.cpv.toFixed(2)}</td>
+          <td>${r.roi!==null?`<span class="pill ${rc}">${(r.roi*100).toFixed(0)}%</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="8" class="empty-state">Sin campañas registradas</td></tr>';
+
+  // ── RECOMENDACIÓN ──
+  let rec;
+  if (tasaG >= .15 && cpvG <= 5)
+    rec = `<strong>Excelente rendimiento.</strong> Conversión del ${(tasaG*100).toFixed(1)}% y CPV de $${cpvG.toFixed(2)}. Considera escalar el presupuesto un 20–30% manteniendo la misma segmentación.`;
+  else if (tasaG >= .08)
+    rec = `<strong>Rendimiento aceptable.</strong> Conversión del ${(tasaG*100).toFixed(1)}%. Mejora el copy y CTA para superar el 15%. Tu CPV de $${cpvG.toFixed(2)} tiene margen de optimización.`;
+  else if (camps === 0)
+    rec = `Sin campañas registradas en el período seleccionado.`;
+  else
+    rec = `<strong>Conversión baja (${(tasaG*100).toFixed(1)}%).</strong> Revisa la segmentación y el contenido visual. Con un CPV de $${cpvG.toFixed(2)}, mejorar la tasa de conversión es la palanca de mayor impacto.`;
+
+  document.getElementById('rec-box').innerHTML = '💡 ' + rec;
+}
+
+// ── HELPERS ──
+function fmt(v) { return v.toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+function cleanNum(val) {
+  if (val === '' || val === null || val === undefined) return 0;
+  if (typeof val === 'number') return val;
+  const s = String(val).replace(/[$%Bs\s]/g,'');
+  if (s.match(/\d+\.\d{3},\d+/)) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  return parseFloat(s.replace(',','.')) || 0;
+}
+
+function parseMes(fecha) {
+  if (!fecha) return null;
+  const asNum = Number(fecha);
+  if (!isNaN(asNum) && asNum > 40000) {
+    const d = new Date((asNum - 25569) * 86400 * 1000);
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  }
+  const p = fecha.match(/(\d{1,4})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (!p) return null;
+  let y, m;
+  if (parseInt(p[1]) > 31)      { y=p[1]; m=p[2]; }
+  else if (parseInt(p[3]) > 31) { y=p[3]; m=p[2]; }
+  else                           { y=p[3]; m=p[2]; }
+  if (y.length===2) y='20'+y;
+  return y+'-'+m.padStart(2,'0');
+}
+
+const MESES_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function fmtMes(ym) {
+  const [y, m] = ym.split('-');
+  return MESES_ES[parseInt(m)-1] + ' ' + y.slice(2);
+}
+
+init();
+</script>
+</body>
+</html>
